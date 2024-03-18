@@ -70,6 +70,21 @@ HTML_TEMPLATE = """
     <div class="container">
         <h1>Video Player</h1>
         <p class="description">
+            Copy the access token and use it to generate the video streams on developer.eagleeyenetworks.com.
+        </p>
+        <input type="text" id="accessToken" class="column column-90" value="{{ access_token }}" readonly />
+        <button onclick="copyAccessToken()" class="column">COPY</button>
+        
+        <script>
+        function copyAccessToken() {
+            var accessTokenInput = document.getElementById('accessToken');
+            if (accessTokenInput) {
+                accessTokenInput.select();
+                document.execCommand('copy');
+            }
+        }
+        </script>
+        <p class="description">
             Select the video format and enter the URL in the input field below. Supported formats are HLS, MP4, and MJPEG.
         </p>
         <select id="formatSelect">
@@ -84,6 +99,21 @@ HTML_TEMPLATE = """
     </div>
     
 <script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Try to fetch access token from cookie first
+    var accessToken = getCookie('access_token');
+    
+    // Fallback to the value injected by Flask if the cookie is not set
+    if (!accessToken) {
+        accessToken = "{{ access_token }}"; // This line is server-side templating and will be evaluated by Flask
+    }
+
+    // Set the access token in the input field
+    var accessTokenInput = document.getElementById('accessToken');
+    if (accessToken && accessTokenInput) {
+        accessTokenInput.value = accessToken;
+    }
+}, false);
     function getCookie(name) {
         let cookieValue = null;
         if (document.cookie && document.cookie !== '') {
