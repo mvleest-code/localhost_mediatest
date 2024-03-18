@@ -5,8 +5,8 @@ from flask import Flask, request, make_response, render_template_string, redirec
 hostName = "127.0.0.1"
 port = 3333
 
-clientId = ""
-clientSecret = ""
+clientId = "6bd0ddbea8a943aa9b4b644858679ddb"
+clientSecret = "qQez^YB248|2/Z$jVtwA"
 
 app = Flask(__name__)
 
@@ -34,6 +34,7 @@ HTML_TEMPLATE = """
 <html>
 <head>
     <title>Video Player</title>
+    <link rel="shortcut icon" href="https://auth.eagleeyenetworks.com/images/favicon.ico">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/milligram/1.4.1/milligram.min.css">
     <script src="https://cdn.jsdelivr.net/npm/hls.js@1"></script>
     <style>
@@ -120,7 +121,7 @@ HTML_TEMPLATE = """
             credentials: 'include'
         };
 
-        fetch("<YOUR BASE URL>/api/v3.0/media/session", requestOptions)
+        fetch("https://api.eagleeyenetworks.com/api/v3.0/media/session", requestOptions)
             .then(response => response.json())
             .then(body => {
                 console.log("Media session URL: ", body.url);
