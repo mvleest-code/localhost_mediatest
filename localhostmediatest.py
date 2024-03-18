@@ -5,15 +5,20 @@ from flask import Flask, request, make_response, render_template_string, redirec
 hostName = "127.0.0.1"
 port = 3333
 
-clientId = "6bd0ddbea8a943aa9b4b644858679ddb"
-clientSecret = "qQez^YB248|2/Z$jVtwA"
+clientId = ""
+clientSecret = ""
 
 app = Flask(__name__)
 
 def getTokens(code):
     url = f"https://auth.eagleeyenetworks.com/oauth2/token?grant_type=authorization_code&scope=vms.all&code={code}&redirect_uri=http://{hostName}:{port}"
-    response = requests.post(url, auth=(clientId, clientSecret))
-    return json.loads(response.text)
+    try:
+        response = requests.post(url, auth=(clientId, clientSecret))
+        response.raise_for_status()  # Raises stored HTTPError, if one occurred
+        return json.loads(response.text)
+    except requests.RequestException as e:
+        print(f"Error getting tokens: {e}")
+        return None
 
 @app.route('/')
 def index():
@@ -21,13 +26,30 @@ def index():
     if code:
         oauthObject = getTokens(code)
         access_token = oauthObject.get('access_token', '')
+        # Get the base URL
+        base_url = get_base_url(access_token)
         response = make_response(render_template_string(HTML_TEMPLATE))
         response.set_cookie('access_token', access_token)
+        response.set_cookie('base_url', base_url)
         return response
     else:
         endpoint = "https://auth.eagleeyenetworks.com/oauth2/authorize"
         requestAuthUrl = f"{endpoint}?client_id={clientId}&response_type=code&scope=vms.all&redirect_uri=http://{hostName}:{port}"
         return redirect(requestAuthUrl)
+
+def get_base_url(access_token):
+    url = "https://api.eagleeyenetworks.com/api/v3.0/clientSettings"
+    headers = {
+        "accept": "application/json",
+        "authorization": f"Bearer {access_token}"
+    }
+    response = requests.get(url, headers=headers)
+    if response.status_code == 200:
+        settings = json.loads(response.text)
+        hostname = settings.get('httpsBaseUrl', {}).get('hostname')
+        if hostname:
+            return f"{hostname}"
+    return None
 
 HTML_TEMPLATE = """
 <!DOCTYPE html>
@@ -121,7 +143,7 @@ HTML_TEMPLATE = """
             credentials: 'include'
         };
 
-        fetch("https://api.eagleeyenetworks.com/api/v3.0/media/session", requestOptions)
+        fetch("https://" + getCookie('base_url') + "/api/v3.0/media/session", requestOptions)
             .then(response => response.json())
             .then(body => {
                 console.log("Media session URL: ", body.url);
